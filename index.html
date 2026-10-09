@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map Painter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- LEFT MENU (30%) -->
+  <aside class="menu">
+    <header class="brand"><span class="spark">✺</span><h1>Map Painter</h1></header>
+    <div id="menuMain">
+    <form id="form" onsubmit="return false">
+      <label class="field">Data sheet (.csv, .xls, .xlsx)
+        <input type="file" id="sheetInput" accept=".csv,.tsv,.txt,.xls,.xlsx">
+      </label>
+      <div id="sheetOpts" hidden>
+        <label class="field">Name column <select id="nameCol"></select></label>
+        <label class="field">Value column <select id="valueCol"></select></label>
+      </div>
+      <fieldset class="field seg"><legend>Color by</legend>
+        <label><input type="radio" name="mode" value="range" checked> Ranges (numeric data)</label>
+        <label><input type="radio" name="mode" value="unique"> Individual values (one color each)</label>
+      </fieldset>
+      <label class="field" id="rangeField"><span id="rangeLabel">Number of ranges</span>
+        <input type="number" id="rangeCount" min="2" value="3">
+        <small id="rangeHint">Load an SVG and a sheet first.</small>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="certify">
+        <span>I certify that every territory in the SVG and in the sheet is named exactly the same.</span>
+      </label>
+      <p id="msg" class="msg"></p>
+    </form>
+    <button id="startBtn" class="primary" disabled>Start</button>
+    </div>
+    <div id="menuLegend" class="menu-legend" hidden>
+      <h2>Legend labels</h2>
+      <p class="muted">Rename each entry. With individual values, the new name also shows in the tooltips and exports.</p>
+      <div id="legendEdit" class="legend-edit"></div>
+      <button id="legendDone" class="primary">Done</button>
+    </div>
+  </aside>
+
+  <!-- CANVAS (70%) -->
+  <main class="main">
+    <div class="stage" id="stage">
+      <section id="uploadView" class="upload">
+        <h2>Upload a map svg</h2>
+        <label class="btn">Choose SVG file
+          <input type="file" id="svgInput" accept=".svg,image/svg+xml" hidden>
+        </label>
+        <p id="svgInfo" class="muted"></p>
+        <div id="preview" class="preview"></div>
+      </section>
+
+      <section id="mapView" hidden>
+        <div id="mapHost" class="map-host"></div>
+        <button id="backBtn" class="icon-btn top-left" title="New map">← New map</button>
+        <button id="paletteBtn" class="icon-btn square top-right" title="Colors">🎨</button>
+
+        <div id="legend" class="legend" title="Click to edit labels">
+          <button id="ear" class="ear" title="Move legend to the other side" aria-label="Move legend">
+            <svg class="ic-right" viewBox="0 0 24 24"><path d="M3 5h18M9 10h12M3 15h18M9 20h12"/></svg>
+            <svg class="ic-left" viewBox="0 0 24 24"><path d="M3 5h18M3 10h12M3 15h18M3 20h12"/></svg>
+          </button>
+          <h3>Legend</h3>
+          <ul id="legendList"></ul>
+        </div>
+
+        <aside id="palette" class="palette" hidden>
+          <h3>Colors</h3>
+          <div id="swatches"></div>
+        </aside>
+      </section>
+    </div>
+
+    <footer id="footer" class="footer" hidden>
+      <div class="dropdown">
+        <button id="exportBtn" class="primary small">Export ▴</button>
+        <ul id="exportMenu" hidden>
+          <li data-fmt="pdf">PDF</li>
+          <li data-fmt="svg">SVG</li>
+          <li data-fmt="png">PNG</li>
+          <li data-fmt="embed">Embed (HTML with tooltip)</li>
+        </ul>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<div id="tooltip" class="tooltip" hidden><h2></h2><h4></h4></div>
+<div id="picker" class="picker" hidden>
+  <div id="sv"><i id="svDot"></i></div>
+  <input type="range" id="hue" min="0" max="360" step="1">
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
