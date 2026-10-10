@@ -12,7 +12,9 @@ const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '
   .replace(/_x[0-9a-f]{4}_/gi, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const fmt = n => n.toLocaleString(undefined, { maximumFractionDigits: 3 });
 const toast = t => { const e = $('toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => e.hidden = true, 2500); };
-const leaves = el => el.matches('g') ? [...el.querySelectorAll(LEAF)] : [el];
+const PAINT = LEAF + ',use';
+const ok = s => !s.closest('defs,mask,clipPath,symbol,pattern');
+const leaves = el => (el.matches('g') ? [...el.querySelectorAll(PAINT)] : [el]).filter(ok);
 
 function parseNum(v) {
   if (typeof v === 'number') return isFinite(v) ? v : NaN;
@@ -73,8 +75,9 @@ function indexShapes() {
   });
 }
 function resetShapes() {
-  S.svg.querySelectorAll(LEAF).forEach(s => {
-    s.style.fill = NODATA; s.style.stroke = '#262624'; s.style.strokeWidth = '1'; s.style.vectorEffect = 'non-scaling-stroke';
+  [...S.svg.querySelectorAll(PAINT)].filter(ok).forEach(s => {
+    s.style.fill = NODATA;
+    if (!s.matches('use')) { s.style.stroke = '#262624'; s.style.strokeWidth = '1'; s.style.vectorEffect = 'non-scaling-stroke'; }
     s.dataset.nodata = '1'; s.classList.remove('hl');
   });
   S.svg.querySelectorAll('[data-tm-name]').forEach(el => { el.removeAttribute('data-tm-name'); el.removeAttribute('data-tm-value'); });
@@ -141,7 +144,7 @@ function suggest(name, used) {
 function refresh() {
   const { items, missing } = match(), mode = getMode(), uniq = mode === 'unique', min = uniq ? 1 : 2;
   const n = items.length, rc = $('rangeCount'), distinct = new Set(items.map(i => i.key)).size;
-  $('rangeLabel').textContent = uniq ? 'Number of colors' : 'Number of ranges';
+  $('rangeLabel').textContent = uniq ? 'Number of colors' : 'Range measure';
   rc.min = uniq ? 1 : 2; rc.max = uniq ? 99 : Math.max(n, 2);
   if (uniq && !S.edited && distinct) rc.value = distinct;
   if (!uniq && +rc.value > n && n >= 2) rc.value = n;
@@ -197,7 +200,7 @@ $('startBtn').onclick = () => {
     it.el.onmouseenter = () => leaves(it.el).forEach(s => s.classList.add('hl'));
     it.el.addEventListener('mouseleave', () => leaves(it.el).forEach(s => s.classList.remove('hl')));
   });
-  paintAll(); buildLegend(); buildPalette();
+  paintAll(); buildLegend(); buildPalette(); updateMeta();
   $('mapHost').innerHTML = ''; $('mapHost').appendChild(S.svg);
   $('uploadView').hidden = true; $('mapView').hidden = false; $('footer').hidden = false;
 };
@@ -215,11 +218,12 @@ const hideTip = () => $('tooltip').hidden = true;
 function buildLegend() {
   $('legendList').innerHTML = S.ranges.map((r, i) => `<li><i data-lg="${i}" style="background:${S.colors[i]}"></i><span data-lt="${i}">${esc(r)}</span></li>`).join('');
 }
-$('ear').onclick = () => $('legend').classList.toggle('right');
+$('ear').onclick = () => { $('legend').classList.toggle('right'); $('legendDock').classList.toggle('right'); };
 const valText = it => S.mode === 'unique' ? S.ranges[it.bin] : it.raw;
 function showMenu(v) { $('menuMain').hidden = v !== 'main'; $('menuLegend').hidden = v !== 'legend'; }
 $('legend').onclick = e => {
   if (e.target.closest('#ear')) return;
+  setTab('maker');
   $('legendEdit').innerHTML = S.ranges.map((r, i) => `<label class="lg-row"><i style="background:${S.colors[i]}" data-le="${i}"></i><input type="text" data-i="${i}" value="${esc(r)}"></label>`).join('');
   showMenu('legend');
 };
@@ -283,6 +287,30 @@ $('backBtn').onclick = () => {
   showMenu('main'); $('mapView').hidden = true; $('footer').hidden = true; $('palette').hidden = true; $('uploadView').hidden = false;
 };
 
+/* ---------- tabs, title, source ---------- */
+function setTab(t) {
+  document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  $('tabMaker').hidden = t !== 'maker'; $('tabResources').hidden = t !== 'resources';
+}
+document.querySelectorAll('.tab[data-tab]').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$('downloadAll').onclick = () => document.querySelectorAll('.res-row a[download]').forEach((a, i) => setTimeout(() => a.click(), i * 400));
+function getSource() {
+  if (!$('srcCheck').checked) return null;
+  const v = $('srcInput').value.trim(); if (!v) return null;
+  if (!/^(https?:\/\/)?[^\s\/]+\.[a-z]{2,}(\/\S*)?$/i.test(v)) return { text: 'Source: ' + v, href: null };
+  const href = /^https?:\/\//i.test(v) ? v : 'https://' + v; let host = v;
+  try { host = new URL(href).hostname.replace(/^www\./, ''); } catch {}
+  return { text: 'Source: ' + host, href };
+}
+function updateMeta() {
+  const t = $('titleInput').value.trim(); $('mapTitle').textContent = t; $('mapTitle').hidden = !t;
+  const s = getSource(), a = $('sourceLink'); a.hidden = !s;
+  if (s) { a.textContent = s.text; s.href ? a.setAttribute('href', s.href) : a.removeAttribute('href'); }
+}
+['titleInput', 'srcInput'].forEach(id => $(id).addEventListener('input', updateMeta));
+$('srcCheck').addEventListener('change', updateMeta);
+$('srcInput').addEventListener('focus', () => { if (!$('srcCheck').checked) { $('srcCheck').checked = true; updateMeta(); } });
+
 /* ---------- export ---------- */
 const NS = 'http://www.w3.org/2000/svg';
 function mk(tag, attrs, text) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
@@ -291,10 +319,10 @@ function buildExport(bg) {
   c.removeAttribute('style'); c.setAttribute('xmlns', NS);
   c.querySelectorAll('.hl').forEach(n => n.classList.remove('hl'));
   c.querySelectorAll('[data-nodata]').forEach(n => n.style.fill = '#d4d4d0');
-  c.querySelectorAll(LEAF).forEach(n => n.style.stroke = '#fff');
+  c.querySelectorAll(LEAF).forEach(n => ok(n) && (n.style.stroke = '#fff'));
   const [x, y, w, h] = c.getAttribute('viewBox').split(/[\s,]+/).map(Number);
   const fs = w / 55, pad = fs, rowH = fs * 1.7, rows = S.ranges.length, per = 5, cols = Math.ceil(rows / per);
-  const lw = Math.max(...S.ranges.map(r => r.length)) * fs * .55 + fs * 3.5, boxW = Math.max(cols * lw, fs * 8), boxH = pad * 2 + rowH * (Math.min(rows, per) + 1);
+  const lw = Math.max(...S.ranges.map(r => r.length)) * fs * .55 + fs * 3.5, boxW = Math.max(cols * lw, fs * 8), boxH = pad * 2 + rowH * (Math.min(rows, per) + 1) + (getSource() ? rowH : 0);
   const g = mk('g', { 'font-family': 'system-ui,Arial,sans-serif' }), ly = y + h + pad;
   g.appendChild(mk('text', { x: x + pad, y: ly + pad + fs, 'font-size': fs * 1.2, 'font-weight': 600, fill: '#222' }, 'Legend'));
   S.ranges.forEach((r, i) => {
@@ -302,10 +330,18 @@ function buildExport(bg) {
     g.appendChild(mk('rect', { x: cx, y: yy, width: fs * 1.2, height: fs * 1.2, rx: fs * .2, fill: S.colors[i] }));
     g.appendChild(mk('text', { x: cx + fs * 1.9, y: yy + fs, 'font-size': fs, fill: '#222' }, r));
   });
+  const src = getSource(), title = $('titleInput').value.trim();
+  if (src) {
+    const sy = ly + pad + rowH * (Math.min(rows, per) + 1) + fs * .6, sf = fs * .85;
+    const t = mk('text', { x: x + pad, y: sy, 'font-size': sf, fill: '#222', 'text-decoration': 'underline' }, src.text);
+    if (src.href) { const a = mk('a', { href: src.href, target: '_blank' }); a.appendChild(t); g.appendChild(a); } else g.appendChild(t);
+    c.srcInfo = { x: x + pad, y: sy - sf, w: src.text.length * sf * .55, h: sf * 1.3, href: src.href };
+  }
+  const W = Math.max(w, boxW + pad * 2), H = h + boxH + pad, ty = title ? fs * 2.8 : 0;
+  if (title) g.appendChild(mk('text', { x: x + pad, y: y - ty + fs * 2, 'font-size': fs * 1.8, 'font-weight': 600, fill: '#222', 'font-family': 'Georgia,serif' }, title));
   c.appendChild(g);
-  const W = Math.max(w, boxW + pad * 2), H = h + boxH + pad;
-  c.setAttribute('viewBox', `${x} ${y} ${W} ${H}`);
-  if (bg) c.insertBefore(mk('rect', { x, y, width: W, height: H, fill: '#fff' }), c.firstChild);
+  c.setAttribute('viewBox', `${x} ${y - ty} ${W} ${H + ty}`);
+  if (bg) c.insertBefore(mk('rect', { x, y: y - ty, width: W, height: H + ty, fill: '#fff' }), c.firstChild);
   return c;
 }
 const ser = n => new XMLSerializer().serializeToString(n);
@@ -316,7 +352,7 @@ async function toCanvas(width = 2000) {
   const img = new Image(); const url = URL.createObjectURL(new Blob([ser(c)], { type: 'image/svg+xml' }));
   await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
   const cv = document.createElement('canvas'); cv.width = width; cv.height = height; cv.getContext('2d').drawImage(img, 0, 0, width, height);
-  URL.revokeObjectURL(url); return cv;
+  URL.revokeObjectURL(url); cv.meta = { vb, src: c.srcInfo }; return cv;
 }
 function embedHtml() {
   const c = buildExport(false); c.setAttribute('width', '100%'); c.removeAttribute('height');
@@ -333,7 +369,10 @@ $('exportMenu').onclick = async e => {
     if (f === 'pdf') {
       const cv = await toCanvas(), w = cv.width / 2, h = cv.height / 2;
       const pdf = new window.jspdf.jsPDF({ orientation: w > h ? 'l' : 'p', unit: 'pt', format: [w, h] });
-      pdf.addImage(cv.toDataURL('image/png'), 'PNG', 0, 0, w, h); pdf.save('map.pdf');
+      pdf.addImage(cv.toDataURL('image/png'), 'PNG', 0, 0, w, h);
+      const m = cv.meta;
+      if (m.src && m.src.href) { const k = w / m.vb[2]; pdf.link((m.src.x - m.vb[0]) * k, (m.src.y - m.vb[1]) * k, m.src.w * k, m.src.h * k, { url: m.src.href }); }
+      pdf.save('map.pdf');
     }
     if (f === 'embed') {
       const code = embedHtml(); download(new Blob([code], { type: 'text/html' }), 'map-embed.html');

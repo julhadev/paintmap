@@ -111,3 +111,52 @@ svg .hl{filter:brightness(1.25);stroke:#faf9f5!important;stroke-width:2px!import
 .lg-row{display:flex;gap:10px;align-items:center}
 .lg-row i{width:26px;height:26px;border-radius:6px;flex:none}
 .lg-row input{flex:1;min-width:0}
+
+/* ===== v2: tabbed menu, cards, source, resources ===== */
+.menu{gap:24px}
+.tabs{display:flex;justify-content:space-between;border-bottom:1px solid var(--line)}
+.tab{position:relative;background:none;border:0;border-bottom:1px solid transparent;margin-bottom:-1px;padding:4px 0 14px;color:var(--muted);font:inherit;font-size:15px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.tab:hover:not(.off){color:var(--text)}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.tab.off{cursor:not-allowed;opacity:.6}
+.tab.off:hover::after{content:"(coming soon)";position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:6px;font-size:11px;letter-spacing:.04em;text-transform:none;white-space:nowrap;color:var(--muted);background:var(--raised);border:1px solid var(--line);border-radius:6px;padding:4px 8px;z-index:10}
+.tab-pane{display:flex;flex-direction:column;gap:24px}
+#menuMain{flex:none;gap:22px}
+#form{flex:none;gap:22px}
+.up{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted)}
+.title-input{background:transparent!important;border:0!important;border-bottom:2px solid var(--line)!important;border-radius:0!important;padding:6px 2px!important;font-size:28px!important;color:var(--text)}
+.title-input::placeholder{color:#8a8985}
+.title-input:focus{outline:none!important;border-bottom-color:var(--muted)!important}
+.cards{display:flex;gap:10px;margin-top:4px}
+.card{position:relative;width:125px;height:125px;border:1px solid #5a5955;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 8px;cursor:pointer;color:var(--muted);font-size:12px}
+.card input{position:absolute;opacity:0;pointer-events:none}
+.card img{height:54px}
+.card i{width:16px;height:16px;border:1.5px solid #8a8985;border-radius:50%;display:grid;place-items:center}
+.card:has(input:checked){border-color:#faf9f5;color:var(--text)}
+.card:has(input:checked) i{border-color:var(--accent)}
+.card:has(input:checked) i::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.card:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+#rangeCount{width:125px;font-family:ui-monospace,monospace}
+.source-row{display:flex;align-items:center;gap:14px}
+.source-row .check{flex:none;white-space:nowrap}
+#srcInput{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:6px 2px;font-size:13px;color:var(--text)}
+#srcInput::placeholder{color:var(--line);opacity:1}
+#srcInput:focus::placeholder{color:transparent}
+#srcInput:focus{outline:none;border-bottom-color:var(--muted)}
+#startBtn{align-self:center;width:264px;border-radius:2px;margin-top:6px}
+.res-desc{margin:0;font-size:14px;line-height:1.5;color:var(--text)}
+.res-row{display:flex;align-items:center;gap:14px;padding:16px 10px}
+.res-row+.res-row{border-top:1px solid var(--line)}
+.res-row img{width:39px;height:55px;flex:none}
+.res-name{flex:1;font-size:13px;min-width:0;overflow-wrap:anywhere}
+.ghost{border:1px solid #5a5955;background:transparent;color:var(--muted);padding:8px 26px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+.ghost:hover{color:var(--text);border-color:var(--text)}
+.primary.mini{align-self:flex-end;border-radius:2px;padding:8px 20px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.legend-dock{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:calc(100% - 32px);z-index:4}
+.legend-dock.right{left:auto;right:16px;align-items:flex-end}
+.legend{position:relative;left:auto;bottom:auto;right:auto}
+.legend.right{left:auto;right:auto}
+.source{font-size:10pt;color:#a8a69e;text-decoration:underline;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.source:not([href]){cursor:default}
+.source[href]:hover{color:var(--text)}
+.map-title{position:absolute;top:18px;left:50%;transform:translateX(-50%);margin:0;font-size:28px;max-width:60%;text-align:center;z-index:3;pointer-events:none}

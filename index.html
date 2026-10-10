@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Map Painter</title>
+  <title>Map Maker</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,38 +11,63 @@
 
   <!-- LEFT MENU (30%) -->
   <aside class="menu">
-    <header class="brand"><span class="spark">✺</span><h1>Map Painter</h1></header>
-    <div id="menuMain">
-    <form id="form" onsubmit="return false">
-      <label class="field">Data sheet (.csv, .xls, .xlsx)
-        <input type="file" id="sheetInput" accept=".csv,.tsv,.txt,.xls,.xlsx">
-      </label>
-      <div id="sheetOpts" hidden>
-        <label class="field">Name column <select id="nameCol"></select></label>
-        <label class="field">Value column <select id="valueCol"></select></label>
+    <nav class="tabs">
+      <button class="tab active" data-tab="maker">Map Maker</button>
+      <button class="tab off" aria-disabled="true" tabindex="-1">Tutorial</button>
+      <button class="tab" data-tab="resources">Resources</button>
+    </nav>
+
+    <section id="tabMaker" class="tab-pane">
+      <div id="menuMain">
+        <form id="form" onsubmit="return false">
+          <label class="field"><span class="up">Data sheet</span>
+            <input type="file" id="sheetInput" accept=".csv,.tsv,.txt,.xls,.xlsx">
+          </label>
+          <div id="sheetOpts" hidden>
+            <label class="field"><span class="up">Name column</span><select id="nameCol"></select></label>
+            <label class="field"><span class="up">Value column</span><select id="valueCol"></select></label>
+          </div>
+          <input type="text" id="titleInput" class="title-input" placeholder="Map Title" maxlength="80" aria-label="Map title">
+          <div class="field"><span class="up">Render data as</span>
+            <div class="cards">
+              <label class="card"><input type="radio" name="mode" value="range" checked>
+                <img src="assets/range.svg" alt=""><span>Category (range)</span><i></i></label>
+              <label class="card"><input type="radio" name="mode" value="unique">
+                <img src="assets/individual.svg" alt=""><span>Individual values</span><i></i></label>
+            </div>
+          </div>
+          <label class="field" id="rangeField"><span class="up" id="rangeLabel">Range measure</span>
+            <input type="number" id="rangeCount" min="2" value="6">
+            <small id="rangeHint">Load an SVG and a sheet first.</small>
+          </label>
+          <div class="source-row">
+            <label class="check"><input type="checkbox" id="srcCheck"><span>Include source</span></label>
+            <input type="text" id="srcInput" placeholder="https://agenciadenoticias.ibge.gov.br/agencia-noticias/2025" spellcheck="false" aria-label="Source URL or text">
+          </div>
+          <label class="check">
+            <input type="checkbox" id="certify">
+            <span>I certify that every territory in the SVG and in the sheet is named exactly the same.</span>
+          </label>
+          <p id="msg" class="msg"></p>
+        </form>
+        <button id="startBtn" class="primary" disabled>Start</button>
       </div>
-      <fieldset class="field seg"><legend>Color by</legend>
-        <label><input type="radio" name="mode" value="range" checked> Ranges (numeric data)</label>
-        <label><input type="radio" name="mode" value="unique"> Individual values (one color each)</label>
-      </fieldset>
-      <label class="field" id="rangeField"><span id="rangeLabel">Number of ranges</span>
-        <input type="number" id="rangeCount" min="2" value="3">
-        <small id="rangeHint">Load an SVG and a sheet first.</small>
-      </label>
-      <label class="check">
-        <input type="checkbox" id="certify">
-        <span>I certify that every territory in the SVG and in the sheet is named exactly the same.</span>
-      </label>
-      <p id="msg" class="msg"></p>
-    </form>
-    <button id="startBtn" class="primary" disabled>Start</button>
-    </div>
-    <div id="menuLegend" class="menu-legend" hidden>
-      <h2>Legend labels</h2>
-      <p class="muted">Rename each entry. With individual values, the new name also shows in the tooltips and exports.</p>
-      <div id="legendEdit" class="legend-edit"></div>
-      <button id="legendDone" class="primary">Done</button>
-    </div>
+      <div id="menuLegend" class="menu-legend" hidden>
+        <h2>Legend labels</h2>
+        <p class="muted">Rename each entry. With individual values, the new name also shows in the tooltips and exports.</p>
+        <div id="legendEdit" class="legend-edit"></div>
+        <button id="legendDone" class="primary">Done</button>
+      </div>
+    </section>
+
+    <section id="tabResources" class="tab-pane" hidden>
+      <p class="res-desc">Use the sample files below from the Brazilian state of Amapá as references to organizing your own data for better usage of Mapmaker</p>
+      <div class="res-row"><img src="assets/svg-icon.svg" alt="SVG file"><span class="res-name">amapa_municipios.svg</span>
+        <a class="ghost" href="assets/samples/amapa_municipios.svg" download>Download</a></div>
+      <div class="res-row"><img src="assets/csv-icon.svg" alt="CSV file"><span class="res-name">amapa_pib-per-capita.csv</span>
+        <a class="ghost" href="assets/samples/amapa_pib-per-capita.csv" download>Download</a></div>
+      <button id="downloadAll" class="primary mini">Download all</button>
+    </section>
   </aside>
 
   <!-- CANVAS (70%) -->
@@ -59,16 +84,20 @@
 
       <section id="mapView" hidden>
         <div id="mapHost" class="map-host"></div>
+        <h2 id="mapTitle" class="map-title" hidden></h2>
         <button id="backBtn" class="icon-btn top-left" title="New map">← New map</button>
         <button id="paletteBtn" class="icon-btn square top-right" title="Colors">🎨</button>
 
-        <div id="legend" class="legend" title="Click to edit labels">
-          <button id="ear" class="ear" title="Move legend to the other side" aria-label="Move legend">
-            <svg class="ic-right" viewBox="0 0 24 24"><path d="M3 5h18M9 10h12M3 15h18M9 20h12"/></svg>
-            <svg class="ic-left" viewBox="0 0 24 24"><path d="M3 5h18M3 10h12M3 15h18M3 20h12"/></svg>
-          </button>
-          <h3>Legend</h3>
-          <ul id="legendList"></ul>
+        <div id="legendDock" class="legend-dock">
+          <div id="legend" class="legend" title="Click to edit labels">
+            <button id="ear" class="ear" title="Move legend to the other side" aria-label="Move legend">
+              <svg class="ic-right" viewBox="0 0 24 24"><path d="M3 5h18M9 10h12M3 15h18M9 20h12"/></svg>
+              <svg class="ic-left" viewBox="0 0 24 24"><path d="M3 5h18M3 10h12M3 15h18M3 20h12"/></svg>
+            </button>
+            <h3>Legend</h3>
+            <ul id="legendList"></ul>
+          </div>
+          <a id="sourceLink" class="source" target="_blank" rel="noopener" hidden></a>
         </div>
 
         <aside id="palette" class="palette" hidden>
