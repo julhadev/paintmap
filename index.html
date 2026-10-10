@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Map Maker</title>
+  <title>Paintmap</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,22 +13,25 @@
   <aside class="menu">
     <nav class="tabs">
       <button class="tab active" data-tab="maker">Map Maker</button>
-      <button class="tab off" aria-disabled="true" tabindex="-1">Tutorial</button>
+      <button class="tab" data-tab="docs">Docs</button>
       <button class="tab" data-tab="resources">Resources</button>
     </nav>
 
+    <div class="menu-scroll">
     <section id="tabMaker" class="tab-pane">
       <div id="menuMain">
+        <p class="about">Paintmap turns a map SVG and a data sheet into a colored, interactive map of territories such as counties or states. Upload both, choose how to group the values, and export the result as PDF, SVG, PNG or an embeddable page.</p>
         <form id="form" onsubmit="return false">
-          <label class="field"><span class="up">Data sheet</span>
+          <label class="field"><span class="up">Data sheet<b class="req" aria-hidden="true">*</b></span>
             <input type="file" id="sheetInput" accept=".csv,.tsv,.txt,.xls,.xlsx">
           </label>
+          <p id="msg" class="msg"></p>
           <div id="sheetOpts" hidden>
-            <label class="field"><span class="up">Name column</span><select id="nameCol"></select></label>
-            <label class="field"><span class="up">Value column</span><select id="valueCol"></select></label>
+            <label class="field"><span class="up">Name column<b class="req" aria-hidden="true">*</b></span><select id="nameCol"></select></label>
+            <label class="field"><span class="up">Value column<b class="req" aria-hidden="true">*</b></span><select id="valueCol"></select></label>
           </div>
-          <input type="text" id="titleInput" class="title-input" placeholder="Map Title" maxlength="80" aria-label="Map title">
-          <div class="field"><span class="up">Render data as</span>
+          <div class="title-wrap"><input type="text" id="titleInput" class="title-input" placeholder="Map Title" maxlength="80" aria-label="Map title" required><b class="req title-req" aria-hidden="true">*</b></div>
+          <div class="field"><span class="up">Render data as<b class="req" aria-hidden="true">*</b></span>
             <div class="cards">
               <label class="card"><input type="radio" name="mode" value="range" checked>
                 <img src="assets/range.svg" alt=""><span>Category (range)</span><i></i></label>
@@ -36,7 +39,7 @@
                 <img src="assets/individual.svg" alt=""><span>Individual values</span><i></i></label>
             </div>
           </div>
-          <label class="field" id="rangeField"><span class="up" id="rangeLabel">Range measure</span>
+          <label class="field" id="rangeField"><span class="up"><span id="rangeLabel">Range measure</span><b class="req" aria-hidden="true">*</b></span>
             <input type="number" id="rangeCount" min="2" value="6">
             <small id="rangeHint">Load an SVG and a sheet first.</small>
           </label>
@@ -44,13 +47,12 @@
             <label class="check"><input type="checkbox" id="srcCheck"><span>Include source</span></label>
             <input type="text" id="srcInput" placeholder="https://agenciadenoticias.ibge.gov.br/agencia-noticias/2025" spellcheck="false" aria-label="Source URL or text">
           </div>
-          <label class="check">
-            <input type="checkbox" id="certify">
-            <span>I certify that every territory in the SVG and in the sheet is named exactly the same.</span>
-          </label>
-          <p id="msg" class="msg"></p>
+          <div class="multi">
+            <a href="#" id="multiLink" class="multi-link">Need multiple sources? Click to upload a spreadsheet</a>
+            <span id="srcChip" class="chip" hidden><span id="chipName"></span><button type="button" id="chipX" aria-label="Remove spreadsheet">×</button></span>
+            <input type="file" id="srcSheetInput" accept=".csv,.tsv,.txt,.xls,.xlsx" hidden>
+          </div>
         </form>
-        <button id="startBtn" class="primary" disabled>Start</button>
       </div>
       <div id="menuLegend" class="menu-legend" hidden>
         <h2>Legend labels</h2>
@@ -60,18 +62,56 @@
       </div>
     </section>
 
+    <section id="tabDocs" class="tab-pane" hidden>
+      <div id="docsList">
+        <h2 class="docs-h">Documentation</h2>
+        <button class="doc-item" data-doc="docs/figma-export.html" data-title="Exporting an SVG from Figma with layer names">
+          <span>Exporting an SVG from Figma with layer names</span>
+          <svg viewBox="0 0 26 12" aria-hidden="true"><path d="M0 6h25M20 1l5 5-5 5"/></svg>
+        </button>
+      </div>
+      <div id="docView" hidden>
+        <button id="docBack" class="link-btn doc-back"><svg viewBox="0 0 26 12" aria-hidden="true"><path d="M26 6H1M6 1L1 6l5 5"/></svg><span>Documentation</span></button>
+        <h2 id="docTitle" class="docs-h"></h2>
+        <iframe id="docFrame" title="Documentation"></iframe>
+      </div>
+    </section>
+
     <section id="tabResources" class="tab-pane" hidden>
-      <p class="res-desc">Use the sample files below from the Brazilian state of Amapá as references to organizing your own data for better usage of Mapmaker</p>
+      <p class="res-desc">Use the sample files below from the Brazilian state of Amapá as references to organizing your own data for better usage of Paintmap</p>
       <div class="res-row"><img src="assets/svg-icon.svg" alt="SVG file"><span class="res-name">amapa_municipios.svg</span>
         <a class="ghost" href="assets/samples/amapa_municipios.svg" download>Download</a></div>
       <div class="res-row"><img src="assets/csv-icon.svg" alt="CSV file"><span class="res-name">amapa_pib-per-capita.csv</span>
         <a class="ghost" href="assets/samples/amapa_pib-per-capita.csv" download>Download</a></div>
       <button id="downloadAll" class="primary mini">Download all</button>
     </section>
+    </div>
+
+    <div id="startBar" class="start-block">
+      <label class="check">
+        <input type="checkbox" id="certify">
+        <span>I certify that every territory in the SVG and in the sheet is named exactly the same.<b class="req" aria-hidden="true">*</b></span>
+      </label>
+      <button id="startBtn" class="primary" disabled>Start</button>
+    </div>
   </aside>
 
   <!-- CANVAS (70%) -->
   <main class="main">
+    <header class="topbar">
+      <button id="backBtn" class="link-btn" hidden>
+        <svg viewBox="0 0 26 12" aria-hidden="true"><path d="M26 6H1M6 1L1 6l5 5"/></svg><span>New map</span>
+      </button>
+      <div id="exportWrap" class="dropdown" hidden>
+        <button id="exportBtn" class="ghost">Export</button>
+        <ul id="exportMenu" hidden>
+          <li data-fmt="pdf">PDF</li>
+          <li data-fmt="svg">SVG</li>
+          <li data-fmt="png">PNG</li>
+          <li data-fmt="embed">Embed (HTML with tooltip)</li>
+        </ul>
+      </div>
+    </header>
     <div class="stage" id="stage">
       <section id="uploadView" class="upload">
         <h2>Upload a map svg</h2>
@@ -85,8 +125,6 @@
       <section id="mapView" hidden>
         <div id="mapHost" class="map-host"></div>
         <h2 id="mapTitle" class="map-title" hidden></h2>
-        <button id="backBtn" class="icon-btn top-left" title="New map">← New map</button>
-        <button id="paletteBtn" class="icon-btn square top-right" title="Colors">🎨</button>
 
         <div id="legendDock" class="legend-dock">
           <div id="legend" class="legend" title="Click to edit labels">
@@ -94,6 +132,7 @@
               <svg class="ic-right" viewBox="0 0 24 24"><path d="M3 5h18M9 10h12M3 15h18M9 20h12"/></svg>
               <svg class="ic-left" viewBox="0 0 24 24"><path d="M3 5h18M3 10h12M3 15h18M3 20h12"/></svg>
             </button>
+            <button id="paletteBtn" class="edit-btn" title="Edit colors" aria-label="Edit colors"><img src="assets/icon-edit.svg" alt=""></button>
             <h3>Legend</h3>
             <ul id="legendList"></ul>
           </div>
@@ -107,17 +146,6 @@
       </section>
     </div>
 
-    <footer id="footer" class="footer" hidden>
-      <div class="dropdown">
-        <button id="exportBtn" class="primary small">Export ▴</button>
-        <ul id="exportMenu" hidden>
-          <li data-fmt="pdf">PDF</li>
-          <li data-fmt="svg">SVG</li>
-          <li data-fmt="png">PNG</li>
-          <li data-fmt="embed">Embed (HTML with tooltip)</li>
-        </ul>
-      </div>
-    </footer>
   </main>
 </div>
 

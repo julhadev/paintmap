@@ -4,22 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Exporting an SVG from Figma with layer names</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
+<script>try { if (window.self !== window.top) document.documentElement.classList.add("embedded"); } catch (e) { document.documentElement.classList.add("embedded"); }</script>
 <main class="doc">
   <h1>Exporting an SVG from Figma with layer names</h1>
-  <p class="muted">Map Painter matches each territory to a layer by name. Figma leaves layer names out of SVG exports unless you ask for them.</p>
+  <p class="muted">Paintmap matches each territory to a layer by name. Figma leaves layer names out of SVG exports unless you ask for them.</p>
   <ol>
     <li>In Figma, give every territory layer exactly the same name as in your sheet (for example <code>Recife</code>). Case and accents are ignored.</li>
     <li>Select the frame that contains the territories.</li>
     <li>In the right-hand panel, scroll to <strong>Export</strong> and set the format to <strong>SVG</strong>.</li>
     <li>Click the <strong>⋯</strong> (three dots) next to the format to open the export settings.</li>
     <li>Turn on <strong>Include "id" attribute</strong>.</li>
-    <li>Click <strong>Export</strong> and upload the new file to Map Painter.</li>
+    <li>Click <strong>Export</strong> and upload the new file to Paintmap.</li>
   </ol>
-  <p>Each territory should now carry an <code>id</code> with its layer name, for example <code>&lt;rect id="um" ...&gt;</code>. If Map Painter still finds no names, open the SVG in a text editor and check that the <code>id</code> attributes are there.</p>
-  <p><a href="index.html">← Back to Map Painter</a></p>
+  <p>Each territory should now carry an <code>id</code> with its layer name, for example <code>&lt;rect id="um" ...&gt;</code>. If Paintmap still finds no names, open the SVG in a text editor and check that the <code>id</code> attributes are there.</p>
+  <p class="back"><a href="../index.html">← Back to Paintmap</a></p>
 </main>
 </body>
 </html>

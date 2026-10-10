@@ -62,7 +62,10 @@ $('svgInput').onchange = async e => {
   S.svg = svg; resetShapes();
   indexShapes();
   if (S.index.size) $('svgInfo').textContent = `${f.name} — ${S.index.size} named shapes found`;
-  else $('svgInfo').innerHTML = `${f.name} — no layer names found.<br>Are you using Figma? <a href="figma-export.html" target="_blank" rel="noopener">See how to export with layer names</a>`;
+  else {
+    $('svgInfo').innerHTML = `${f.name} — no layer names found.<br>Are you using Figma? <a href="#" id="figmaDocLink">See how to export with layer names</a>`;
+    $('figmaDocLink').onclick = e => { e.preventDefault(); setTab('docs'); openDoc('docs/figma-export.html', 'Exporting an SVG from Figma with layer names'); };
+  }
   refresh();
 };
 function indexShapes() {
@@ -158,9 +161,9 @@ function refresh() {
     else if (n < min) setMsg('Too few sheet rows match a shape name in the SVG. Check the name column and the layer names. SVG names found: ' + ([...S.index.keys()].slice(0, 6).join(', ') || 'none') + '. Sheet names: ' + S.rows.slice(0, 6).map(r => r[+$('nameCol').value]).join(', ') + '.', 'err');
     else if (mismatch) setMsg(`Your value column has ${distinct} distinct values, but you asked for ${rc.value} colors. Check that the right value column is selected, or change the number.`, 'err');
     else if (missing.length) setMsg(`${n} matched. ${missing.length} sheet row(s) have no shape with the same name: ` + missing.slice(0, 6).map(m => { const g = suggest(m, used); return g ? `${m} (SVG has "${g}")` : m; }).join('; ') + (missing.length > 6 ? '…' : '') + '. Rename them to match, then reload the file.', 'warn');
-    else setMsg(uniq ? `${n} territories matched, ${distinct} distinct values.` : `${n} territories matched.`);
+    else setMsg((uniq ? `${n} territories matched, ${distinct} distinct values.` : `${n} territories matched.`) + ($('titleInput').value.trim() ? '' : ' A map title is required.'), $('titleInput').value.trim() ? '' : 'warn');
   } else setMsg('');
-  $('startBtn').disabled = !(n >= min && $('certify').checked && !same && !mismatch && (uniq || (+rc.value >= 2 && +rc.value <= n)));
+  $('startBtn').disabled = !(n >= min && $('certify').checked && !same && !mismatch && $('titleInput').value.trim() && (uniq || (+rc.value >= 2 && +rc.value <= n)));
 }
 ['nameCol', 'valueCol'].forEach(i => $(i).onchange = () => { S.edited = false; refresh(); });
 document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { S.edited = false; refresh(); });
@@ -202,7 +205,7 @@ $('startBtn').onclick = () => {
   });
   paintAll(); buildLegend(); buildPalette(); updateMeta();
   $('mapHost').innerHTML = ''; $('mapHost').appendChild(S.svg);
-  $('uploadView').hidden = true; $('mapView').hidden = false; $('footer').hidden = false;
+  $('uploadView').hidden = true; $('mapView').hidden = false; $('exportWrap').hidden = false; $('backBtn').hidden = false;
 };
 function paintAll() { S.items.forEach(it => leaves(it.el).forEach(s => { s.style.fill = S.colors[it.bin]; delete s.dataset.nodata; })); }
 
@@ -220,9 +223,10 @@ function buildLegend() {
 }
 $('ear').onclick = () => { $('legend').classList.toggle('right'); $('legendDock').classList.toggle('right'); };
 const valText = it => S.mode === 'unique' ? S.ranges[it.bin] : it.raw;
-function showMenu(v) { $('menuMain').hidden = v !== 'main'; $('menuLegend').hidden = v !== 'legend'; }
+function showMenu(v) { $('menuMain').hidden = v !== 'main'; $('menuLegend').hidden = v !== 'legend'; syncStartBar(); }
+function syncStartBar() { $('startBar').hidden = $('tabMaker').hidden || $('menuMain').hidden; }
 $('legend').onclick = e => {
-  if (e.target.closest('#ear')) return;
+  if (e.target.closest('#ear, #paletteBtn')) return;
   setTab('maker');
   $('legendEdit').innerHTML = S.ranges.map((r, i) => `<label class="lg-row"><i style="background:${S.colors[i]}" data-le="${i}"></i><input type="text" data-i="${i}" value="${esc(r)}"></label>`).join('');
   showMenu('legend');
@@ -284,18 +288,26 @@ document.addEventListener('click', e => {
 });
 $('backBtn').onclick = () => {
   $('preview').innerHTML = ''; $('preview').appendChild(S.svg);
-  showMenu('main'); $('mapView').hidden = true; $('footer').hidden = true; $('palette').hidden = true; $('uploadView').hidden = false;
+  showMenu('main'); $('mapView').hidden = true; $('exportWrap').hidden = true; $('backBtn').hidden = true; $('palette').hidden = true; $('uploadView').hidden = false;
 };
 
 /* ---------- tabs, title, source ---------- */
 function setTab(t) {
   document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
-  $('tabMaker').hidden = t !== 'maker'; $('tabResources').hidden = t !== 'resources';
+  $('tabMaker').hidden = t !== 'maker'; $('tabDocs').hidden = t !== 'docs'; $('tabResources').hidden = t !== 'resources'; syncStartBar();
 }
 document.querySelectorAll('.tab[data-tab]').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('downloadAll').onclick = () => document.querySelectorAll('.res-row a[download]').forEach((a, i) => setTimeout(() => a.click(), i * 400));
-function getSource() {
+function openDoc(path, title) { $('docTitle').textContent = title; $('docFrame').src = path; $('docsList').hidden = true; $('docView').hidden = false; }
+document.querySelectorAll('.doc-item').forEach(b => b.onclick = () => openDoc(b.dataset.doc, b.dataset.title));
+$('docBack').onclick = () => { $('docView').hidden = true; $('docsList').hidden = false; $('docFrame').removeAttribute('src'); };
+function getSource(target = 'app') {
   if (!$('srcCheck').checked) return null;
+  if (S.srcSheet) {
+    if (target === 'pdf') return { text: 'Sources: see next page', href: null };
+    if (target === 'png') return { text: 'Sources: ' + S.srcSheet.name, href: null };
+    return { text: 'Sources (click to download)', href: S.srcSheet.uri, download: S.srcSheet.name };
+  }
   const v = $('srcInput').value.trim(); if (!v) return null;
   if (!/^(https?:\/\/)?[^\s\/]+\.[a-z]{2,}(\/\S*)?$/i.test(v)) return { text: 'Source: ' + v, href: null };
   const href = /^https?:\/\//i.test(v) ? v : 'https://' + v; let host = v;
@@ -305,16 +317,57 @@ function getSource() {
 function updateMeta() {
   const t = $('titleInput').value.trim(); $('mapTitle').textContent = t; $('mapTitle').hidden = !t;
   const s = getSource(), a = $('sourceLink'); a.hidden = !s;
-  if (s) { a.textContent = s.text; s.href ? a.setAttribute('href', s.href) : a.removeAttribute('href'); }
+  if (s) {
+    a.textContent = s.text;
+    s.href ? a.setAttribute('href', s.href) : a.removeAttribute('href');
+    if (s.download) { a.setAttribute('download', s.download); a.removeAttribute('target'); } else { a.removeAttribute('download'); a.setAttribute('target', '_blank'); }
+    a.onclick = s.href && !s.download ? ev => { ev.preventDefault(); window.open(s.href, '_blank', 'noopener'); } : null;
+  }
 }
-['titleInput', 'srcInput'].forEach(id => $(id).addEventListener('input', updateMeta));
+$('titleInput').addEventListener('input', () => { updateMeta(); refresh(); });
+$('srcInput').addEventListener('input', syncSource);
+async function readRows(f) {
+  const wb = /\.(csv|tsv|txt)$/i.test(f.name) ? XLSX.read(await f.text(), { type: 'string', raw: true }) : XLSX.read(await f.arrayBuffer(), { type: 'array' });
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' }).map(r => r.map(c => typeof c === 'string' ? c.trim() : c)).filter(r => r.some(c => c !== ''));
+}
+function syncSource() {
+  const sh = !!S.srcSheet, has = !!$('srcInput').value.trim();
+  $('srcChip').hidden = !sh; $('chipName').textContent = sh ? S.srcSheet.name : '';
+  $('multiLink').hidden = sh; $('multiLink').classList.toggle('off', has);
+  $('srcInput').disabled = sh; updateMeta();
+}
+$('multiLink').onclick = e => { e.preventDefault(); if ($('srcInput').value.trim()) return toast('Clear the direct link to upload a spreadsheet instead.'); $('srcSheetInput').click(); };
+$('srcSheetInput').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const rows = await readRows(f), buf = new Uint8Array(await f.arrayBuffer()); let bin = '';
+    for (let i = 0; i < buf.length; i += 8192) bin += String.fromCharCode(...buf.subarray(i, i + 8192));
+    S.srcSheet = { name: f.name, rows, uri: `data:${f.type || 'application/octet-stream'};base64,${btoa(bin)}` };
+    $('srcInput').value = ''; $('srcCheck').checked = true; syncSource();
+  } catch (err) { toast('Could not read that spreadsheet.'); }
+};
+$('chipX').onclick = () => { S.srcSheet = null; syncSource(); };
+const fileBase = () => $('titleInput').value.trim().replace(/[\\/:*?"<>|]+/g, '').trim() || 'map';
+function addSourcesPages(pdf, pw, ph) {
+  const m = pw * .06, fs = Math.max(11, pw / 75), lh = fs * 1.5, ori = pw > ph ? 'l' : 'p', isU = c => /^https?:\/\/\S+$/i.test(c);
+  let y = m + fs; pdf.addPage([pw, ph], ori);
+  pdf.setFont('helvetica', 'bold'); pdf.setFontSize(fs * 1.6); pdf.setTextColor(34); pdf.text('Sources', m, y); y += lh * 1.8;
+  pdf.setFont('helvetica', 'normal'); pdf.setFontSize(fs);
+  const room = () => { if (y > ph - m) { pdf.addPage([pw, ph], ori); y = m + fs; pdf.setFontSize(fs); } };
+  S.srcSheet.rows.forEach(r => {
+    const cells = r.map(c => String(c).trim()).filter(Boolean), plain = cells.filter(c => !isU(c)), urls = cells.filter(isU);
+    if (plain.length) pdf.splitTextToSize(plain.join('  —  '), pw - m * 2).forEach(l => { room(); pdf.setTextColor(34); pdf.text(l, m, y); y += lh; });
+    urls.forEach(u => { room(); pdf.setTextColor(0, 0, 200); pdf.textWithLink(u.length > 110 ? u.slice(0, 107) + '…' : u, m + fs, y, { url: u }); y += lh; });
+    y += lh * .4;
+  });
+}
 $('srcCheck').addEventListener('change', updateMeta);
 $('srcInput').addEventListener('focus', () => { if (!$('srcCheck').checked) { $('srcCheck').checked = true; updateMeta(); } });
 
 /* ---------- export ---------- */
 const NS = 'http://www.w3.org/2000/svg';
 function mk(tag, attrs, text) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
-function buildExport(bg) {
+function buildExport(bg, target = 'svg') {
   const c = S.svg.cloneNode(true);
   c.removeAttribute('style'); c.setAttribute('xmlns', NS);
   c.querySelectorAll('.hl').forEach(n => n.classList.remove('hl'));
@@ -322,7 +375,7 @@ function buildExport(bg) {
   c.querySelectorAll(LEAF).forEach(n => ok(n) && (n.style.stroke = '#fff'));
   const [x, y, w, h] = c.getAttribute('viewBox').split(/[\s,]+/).map(Number);
   const fs = w / 55, pad = fs, rowH = fs * 1.7, rows = S.ranges.length, per = 5, cols = Math.ceil(rows / per);
-  const lw = Math.max(...S.ranges.map(r => r.length)) * fs * .55 + fs * 3.5, boxW = Math.max(cols * lw, fs * 8), boxH = pad * 2 + rowH * (Math.min(rows, per) + 1) + (getSource() ? rowH : 0);
+  const lw = Math.max(...S.ranges.map(r => r.length)) * fs * .55 + fs * 3.5, boxW = Math.max(cols * lw, fs * 8), boxH = pad * 2 + rowH * (Math.min(rows, per) + 1) + (getSource(target) ? rowH : 0);
   const g = mk('g', { 'font-family': 'system-ui,Arial,sans-serif' }), ly = y + h + pad;
   g.appendChild(mk('text', { x: x + pad, y: ly + pad + fs, 'font-size': fs * 1.2, 'font-weight': 600, fill: '#222' }, 'Legend'));
   S.ranges.forEach((r, i) => {
@@ -330,11 +383,11 @@ function buildExport(bg) {
     g.appendChild(mk('rect', { x: cx, y: yy, width: fs * 1.2, height: fs * 1.2, rx: fs * .2, fill: S.colors[i] }));
     g.appendChild(mk('text', { x: cx + fs * 1.9, y: yy + fs, 'font-size': fs, fill: '#222' }, r));
   });
-  const src = getSource(), title = $('titleInput').value.trim();
+  const src = getSource(target), title = $('titleInput').value.trim();
   if (src) {
     const sy = ly + pad + rowH * (Math.min(rows, per) + 1) + fs * .6, sf = fs * .85;
     const t = mk('text', { x: x + pad, y: sy, 'font-size': sf, fill: '#222', 'text-decoration': 'underline' }, src.text);
-    if (src.href) { const a = mk('a', { href: src.href, target: '_blank' }); a.appendChild(t); g.appendChild(a); } else g.appendChild(t);
+    if (src.href) { const a = mk('a', src.download ? { href: src.href, download: src.download } : { href: src.href, target: '_blank' }); a.appendChild(t); g.appendChild(a); } else g.appendChild(t);
     c.srcInfo = { x: x + pad, y: sy - sf, w: src.text.length * sf * .55, h: sf * 1.3, href: src.href };
   }
   const W = Math.max(w, boxW + pad * 2), H = h + boxH + pad, ty = title ? fs * 2.8 : 0;
@@ -346,8 +399,8 @@ function buildExport(bg) {
 }
 const ser = n => new XMLSerializer().serializeToString(n);
 function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
-async function toCanvas(width = 2000) {
-  const c = buildExport(true), vb = c.getAttribute('viewBox').split(' ').map(Number), height = Math.round(width * vb[3] / vb[2]);
+async function toCanvas(width = 2000, target = 'png') {
+  const c = buildExport(true, target), vb = c.getAttribute('viewBox').split(' ').map(Number), height = Math.round(width * vb[3] / vb[2]);
   c.setAttribute('width', width); c.setAttribute('height', height);
   const img = new Image(); const url = URL.createObjectURL(new Blob([ser(c)], { type: 'image/svg+xml' }));
   await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
@@ -364,18 +417,19 @@ $('exportBtn').onclick = e => { e.stopPropagation(); $('exportMenu').hidden = !$
 $('exportMenu').onclick = async e => {
   const f = e.target.dataset.fmt; if (!f) return; $('exportMenu').hidden = true;
   try {
-    if (f === 'svg') download(new Blob([ser(buildExport(false))], { type: 'image/svg+xml' }), 'map.svg');
-    if (f === 'png') (await toCanvas()).toBlob(b => download(b, 'map.png'));
+    if (f === 'svg') download(new Blob([ser(buildExport(false))], { type: 'image/svg+xml' }), fileBase() + '.svg');
+    if (f === 'png') (await toCanvas(2000, 'png')).toBlob(b => download(b, fileBase() + '.png'));
     if (f === 'pdf') {
-      const cv = await toCanvas(), w = cv.width / 2, h = cv.height / 2;
+      const cv = await toCanvas(2000, 'pdf'), w = cv.width / 2, h = cv.height / 2;
       const pdf = new window.jspdf.jsPDF({ orientation: w > h ? 'l' : 'p', unit: 'pt', format: [w, h] });
       pdf.addImage(cv.toDataURL('image/png'), 'PNG', 0, 0, w, h);
       const m = cv.meta;
       if (m.src && m.src.href) { const k = w / m.vb[2]; pdf.link((m.src.x - m.vb[0]) * k, (m.src.y - m.vb[1]) * k, m.src.w * k, m.src.h * k, { url: m.src.href }); }
-      pdf.save('map.pdf');
+      if (S.srcSheet && $('srcCheck').checked) addSourcesPages(pdf, w, h);
+      pdf.setProperties({ title: fileBase() }); pdf.save(fileBase() + '.pdf');
     }
     if (f === 'embed') {
-      const code = embedHtml(); download(new Blob([code], { type: 'text/html' }), 'map-embed.html');
+      const code = embedHtml(); download(new Blob([code], { type: 'text/html' }), fileBase() + ' (embed).html');
       try { await navigator.clipboard.writeText(code); toast('Embed code copied and downloaded'); } catch { toast('Embed file downloaded'); }
     }
   } catch (err) { toast('Export failed: ' + err.message); }

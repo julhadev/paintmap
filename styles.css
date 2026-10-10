@@ -115,7 +115,7 @@ svg .hl{filter:brightness(1.25);stroke:#faf9f5!important;stroke-width:2px!import
 /* ===== v2: tabbed menu, cards, source, resources ===== */
 .menu{gap:24px}
 .tabs{display:flex;justify-content:space-between;border-bottom:1px solid var(--line)}
-.tab{position:relative;background:none;border:0;border-bottom:1px solid transparent;margin-bottom:-1px;padding:4px 0 14px;color:var(--muted);font:inherit;font-size:15px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.tab{position:relative;display:flex;align-items:center;height:61px;background:none;border:0;border-bottom:1px solid transparent;margin-bottom:-1px;padding:0;color:var(--muted);font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
 .tab:hover:not(.off){color:var(--text)}
 .tab.active{color:#fff;border-bottom-color:#fff}
 .tab.off{cursor:not-allowed;opacity:.6}
@@ -149,9 +149,9 @@ svg .hl{filter:brightness(1.25);stroke:#faf9f5!important;stroke-width:2px!import
 .res-row+.res-row{border-top:1px solid var(--line)}
 .res-row img{width:39px;height:55px;flex:none}
 .res-name{flex:1;font-size:13px;min-width:0;overflow-wrap:anywhere}
-.ghost{border:1px solid #5a5955;background:transparent;color:var(--muted);padding:8px 26px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+.ghost{border:1px solid #5a5955;background:transparent;color:var(--muted);padding:8px 26px;font-size:11px;text-decoration:none;cursor:pointer}
 .ghost:hover{color:var(--text);border-color:var(--text)}
-.primary.mini{align-self:flex-end;border-radius:2px;padding:8px 20px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.primary.mini{align-self:flex-end;border-radius:2px;padding:8px 20px;font-size:11px}
 .legend-dock{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-width:calc(100% - 32px);z-index:4}
 .legend-dock.right{left:auto;right:16px;align-items:flex-end}
 .legend{position:relative;left:auto;bottom:auto;right:auto}
@@ -160,3 +160,60 @@ svg .hl{filter:brightness(1.25);stroke:#faf9f5!important;stroke-width:2px!import
 .source:not([href]){cursor:default}
 .source[href]:hover{color:var(--text)}
 .map-title{position:absolute;top:18px;left:50%;transform:translateX(-50%);margin:0;font-size:28px;max-width:60%;text-align:center;z-index:3;pointer-events:none}
+
+/* ===== v3: top bar, button type, legend fit, pencil ===== */
+.menu{padding-top:0}
+.tabs{height:61px}
+.topbar{height:61px;flex:none;display:flex;align-items:center;justify-content:flex-end;padding:0 20px;border-bottom:1px solid var(--line)}
+.dropdown ul{top:calc(100% + 8px);bottom:auto}
+.tab,.ghost,.primary,.btn,.icon-btn{font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+.primary,.btn,.icon-btn{font-size:12px}
+.ghost{border-radius:2px;padding:9px 22px;color:var(--text)}
+.tab.off:hover::after{letter-spacing:.04em;font-weight:400}
+.legend,.legend-dock{width:max-content;max-width:none}
+.legend ul{overflow:visible;grid-auto-columns:max-content}
+.legend h3{padding-right:44px}
+.edit-btn{position:absolute;top:10px;right:10px;width:28px;height:28px;display:grid;place-items:center;padding:0;background:transparent;border:1px solid #5a5955;border-radius:6px;cursor:pointer}
+.edit-btn:hover{border-color:var(--text)}
+.edit-btn img{width:14px;height:14px}
+.palette{padding-top:24px}
+
+/* ===== v4 ===== */
+.topbar{justify-content:space-between;background:var(--panel)}
+#exportWrap{margin-left:auto}
+.link-btn{display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--text);cursor:pointer;font:inherit;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;padding:8px 0}
+.link-btn svg{width:26px;height:12px;stroke:var(--muted);fill:none;stroke-width:1}
+.link-btn:hover svg{stroke:var(--text)}
+.start-block{display:flex;flex-direction:column;gap:16px}
+.req{color:var(--accent);font-weight:600;margin-left:3px}
+.title-wrap{position:relative}
+.title-wrap .title-input{width:100%;padding-right:28px!important}
+.title-req{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:22px;margin:0}
+.multi{margin-top:-10px}
+.multi-link{color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer;display:inline-block}
+.multi-link:hover{color:var(--text)}
+.multi-link.off{opacity:.4;cursor:not-allowed}
+.chip{display:inline-flex;align-items:center;gap:8px;background:#e3daf7;color:#2a2340;border-radius:999px;padding:4px 6px 4px 12px;font-size:13px;max-width:100%}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip button{background:none;border:0;color:inherit;font-size:16px;line-height:1;cursor:pointer;padding:0 6px}
+#srcInput:disabled{opacity:.4;cursor:not-allowed}
+.source{position:relative;z-index:5;pointer-events:auto}
+
+/* ===== v5: fixed start bar, docs, chip ===== */
+.menu{padding:0;gap:0;overflow:hidden;min-height:0}
+.tabs{margin:0 24px}
+.menu-scroll{flex:1;min-height:0;overflow-y:auto;padding:24px}
+.start-block{flex:none;border-top:1px solid var(--line);padding:16px 24px 20px;background:var(--panel)}
+.about{margin:0 0 22px;font-size:13px;line-height:1.55;color:var(--muted)}
+.chip{display:flex;justify-content:space-between;width:100%;background:#2a1208;color:var(--accent);padding:11px 14px 11px 18px;font-size:15px}
+.chip button{color:var(--accent);font-size:20px}
+.docs-h{font:400 24px/1.25 var(--sans);margin:0 0 18px}
+.doc-item{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;background:none;border:0;border-bottom:1px solid #5a5955;color:var(--text);font:inherit;font-size:14px;padding:16px 0;cursor:pointer;text-align:left}
+.doc-item svg{width:26px;height:12px;flex:none;stroke:var(--muted);fill:none;stroke-width:1}
+.doc-item:hover svg{stroke:var(--text)}
+.doc-back{color:var(--muted);margin-bottom:18px}
+#docView .docs-h{padding-bottom:16px;border-bottom:1px solid #5a5955;margin-bottom:12px}
+#docFrame{display:block;width:100%;height:calc(100vh - 360px);min-height:260px;border:0;background:transparent}
+html.embedded body{background:transparent}
+.embedded .doc{padding:0;max-width:none;margin:0}
+.embedded .doc h1,.embedded .doc .back{display:none}
