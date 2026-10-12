@@ -46,8 +46,9 @@ function ramp(n) {
 }
 
 /* ---------- SVG upload ---------- */
-$('svgInput').onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
+$('svgInput').onchange = e => { const f = e.target.files[0]; return f && loadSvg(f); };
+async function loadSvg(f) {
+  if (!$('mapView').hidden) $('backBtn').onclick();
   const doc = new DOMParser().parseFromString(await f.text(), 'image/svg+xml');
   const root = doc.documentElement;
   if (doc.querySelector('parsererror') || root.nodeName.toLowerCase() !== 'svg') { $('svgInfo').textContent = 'That file is not a valid SVG.'; S.svg = null; return refresh(); }
@@ -67,7 +68,7 @@ $('svgInput').onchange = async e => {
     $('figmaDocLink').onclick = e => { e.preventDefault(); setTab('docs'); openDoc('docs/figma-export.html', 'Exporting an SVG from Figma with layer names'); };
   }
   refresh();
-};
+}
 function indexShapes() {
   S.index = new Map(); S.labels = new Map();
   S.svg.querySelectorAll(SHAPES).forEach(el => {
@@ -87,8 +88,9 @@ function resetShapes() {
 }
 
 /* ---------- sheet upload ---------- */
-$('sheetInput').onchange = async e => {
-  const f = e.target.files[0]; if (!f) return; S.edited = false;
+$('sheetInput').onchange = e => { const f = e.target.files[0]; return f && loadSheet(f); };
+async function loadSheet(f) {
+  S.edited = false;
   try {
     const wb = /\.(csv|tsv|txt)$/i.test(f.name)
       ? XLSX.read(await f.text(), { type: 'string', raw: true })
@@ -109,7 +111,7 @@ $('sheetInput').onchange = async e => {
     $('sheetOpts').hidden = false;
   } catch (err) { S.rows = null; setMsg('Could not read that sheet.', 'err'); }
   refresh();
-};
+}
 
 /* ---------- matching + form state ---------- */
 function match() {
@@ -290,6 +292,48 @@ $('backBtn').onclick = () => {
   $('preview').innerHTML = ''; $('preview').appendChild(S.svg);
   showMenu('main'); $('mapView').hidden = true; $('exportWrap').hidden = true; $('backBtn').hidden = true; $('palette').hidden = true; $('uploadView').hidden = false;
 };
+
+/* ---------- drag & drop / import ---------- */
+const canvasToast = t => { const e = $('canvasToast'); e.textContent = t; e.hidden = false; clearTimeout(canvasToast.t); canvasToast.t = setTimeout(() => e.hidden = true, 3500); };
+const showDrop = on => $('dropOverlay').hidden = !on;
+// show the imported file's name in the native file field
+function setInputFile(input, f) { try { const dt = new DataTransfer(); dt.items.add(f); input.files = dt.files; } catch (e) {} }
+async function importFile(f) {
+  try {
+    if (/\.svg$/i.test(f.name)) { await loadSvg(f); canvasToast('SVG imported successfully'); }
+    else if (/\.(csv|tsv|txt|xls|xlsx)$/i.test(f.name)) { setTab('maker'); showMenu('main'); setInputFile($('sheetInput'), f); await loadSheet(f); canvasToast('Spreadsheet imported successfully'); }
+    else toast('Unsupported file. Use an SVG or a CSV/XLS sheet.');
+  } catch (err) { console.error(err); toast('Import failed: ' + err.message); }
+}
+async function sampleFile(key) {
+  const x = (window.SAMPLES || {})[key];
+  if (x) return new File([x.text], x.name, { type: x.type });
+  const a = document.querySelector(`[data-sample="${key}"] a[download]`);   // fallback when served over http
+  try { const r = await fetch(a.href); if (r.ok) return new File([await r.blob()], a.getAttribute('download') || a.href.split('/').pop()); } catch (e) {}
+  throw new Error('Sample data not found. Keep samples.js in the assets folder (or next to index.html) and reload.');
+}
+async function importSample(key) { try { await importFile(await sampleFile(key)); } catch (err) { console.error(err); toast(err.message); } }
+let draggingSample = null, dragDepth = 0;
+document.querySelectorAll('.res-row').forEach(r => {
+  r.addEventListener('dragstart', e => {
+    draggingSample = r.dataset.sample;
+    e.dataTransfer.setData('text/x-paintmap-sample', draggingSample); e.dataTransfer.setData('text/plain', draggingSample); e.dataTransfer.effectAllowed = 'copy';
+    setTimeout(() => r.classList.add('dragging'), 0); showDrop(true);
+  });
+  r.addEventListener('dragend', () => { r.classList.remove('dragging'); dragDepth = 0; showDrop(false); setTimeout(() => draggingSample = null, 300); });
+});
+document.querySelectorAll('.import-btn').forEach(b => b.onclick = () => importSample(b.dataset.import));
+const hasPayload = e => !!draggingSample || [...(e.dataTransfer?.types || [])].some(t => t === 'Files' || t === 'text/x-paintmap-sample');
+document.addEventListener('dragenter', e => { if (hasPayload(e)) { e.preventDefault(); dragDepth++; showDrop(true); } });
+document.addEventListener('dragleave', e => { if (hasPayload(e) && --dragDepth <= 0) { dragDepth = 0; showDrop(false); } });
+document.addEventListener('dragover', e => { if (hasPayload(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+document.addEventListener('drop', e => {
+  if (!hasPayload(e)) return;
+  e.preventDefault(); dragDepth = 0; showDrop(false);
+  const key = draggingSample || e.dataTransfer.getData('text/x-paintmap-sample'), file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!$('stage').contains(e.target)) return;
+  if (key) importSample(key); else if (file) importFile(file); else toast('Nothing to import: the drop carried no file.');
+});
 
 /* ---------- tabs, title, source ---------- */
 function setTab(t) {

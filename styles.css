@@ -217,3 +217,24 @@ svg .hl{filter:brightness(1.25);stroke:#faf9f5!important;stroke-width:2px!import
 html.embedded body{background:transparent}
 .embedded .doc{padding:0;max-width:none;margin:0}
 .embedded .doc h1,.embedded .doc .back{display:none}
+
+/* ===== v6: resources drag & import ===== */
+.res-row{border:1px solid transparent;border-radius:6px;cursor:default;position:relative}
+.res-row+.res-row{border-top-color:var(--line);border-top-left-radius:0;border-top-right-radius:0}
+.res-row:hover{border-color:#8a8985;border-radius:6px;cursor:grab}
+.res-row:hover+.res-row{border-top-color:transparent}
+.res-row:active{cursor:grabbing}
+.res-actions{display:flex;flex-direction:column;align-items:center;gap:6px;visibility:hidden}
+.grip{width:10px;height:16px;fill:var(--muted);flex:none;visibility:hidden}
+.res-row:hover .res-actions,.res-row:hover .grip{visibility:visible}
+.import-btn{background:#6b6a66;color:#fff;border:0;border-radius:2px;padding:5px 18px;font:inherit;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
+.import-btn:hover{background:#8a8985}
+.dl-link{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-decoration:underline;cursor:pointer}
+.dl-link:hover{color:var(--text)}
+.res-row.dragging{background:#0e0e0e;border-color:transparent}
+.res-row.dragging>*{visibility:hidden}
+.res-row.dragging::before{content:"Drag to canvas to Import";position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.drop-overlay{position:absolute;inset:0;z-index:50;background:rgba(16,16,16,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+.drop-overlay p{margin:0;font-size:26px;color:var(--text)}
+.canvas-toast{position:absolute;top:16px;left:16px;z-index:60;background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:13px;box-shadow:0 6px 20px #0008}
+.doc img{max-width:100%;height:auto;border-radius:8px}

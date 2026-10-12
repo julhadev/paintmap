@@ -13,8 +13,8 @@
   <aside class="menu">
     <nav class="tabs">
       <button class="tab active" data-tab="maker">Map Maker</button>
-      <button class="tab" data-tab="docs">Docs</button>
       <button class="tab" data-tab="resources">Resources</button>
+      <button class="tab" data-tab="docs">Docs</button>
     </nav>
 
     <div class="menu-scroll">
@@ -79,10 +79,16 @@
 
     <section id="tabResources" class="tab-pane" hidden>
       <p class="res-desc">Use the sample files below from the Brazilian state of Amapá as references to organizing your own data for better usage of Paintmap</p>
-      <div class="res-row"><img src="assets/svg-icon.svg" alt="SVG file"><span class="res-name">amapa_municipios.svg</span>
-        <a class="ghost" href="assets/samples/amapa_municipios.svg" download>Download</a></div>
-      <div class="res-row"><img src="assets/csv-icon.svg" alt="CSV file"><span class="res-name">amapa_pib-per-capita.csv</span>
-        <a class="ghost" href="assets/samples/amapa_pib-per-capita.csv" download>Download</a></div>
+      <div class="res-row" draggable="true" data-sample="svg">
+        <img src="assets/svg-icon.svg" alt="SVG file" draggable="false"><span class="res-name">amapa_municipios.svg</span>
+        <div class="res-actions"><button type="button" class="import-btn" data-import="svg">Import</button><a class="dl-link" href="assets/samples/amapa_municipios.svg" download>Download</a></div>
+        <svg class="grip" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2" cy="3" r="1.4"/><circle cx="8" cy="3" r="1.4"/><circle cx="2" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="2" cy="13" r="1.4"/><circle cx="8" cy="13" r="1.4"/></svg>
+      </div>
+      <div class="res-row" draggable="true" data-sample="csv">
+        <img src="assets/csv-icon.svg" alt="CSV file" draggable="false"><span class="res-name">amapa_pib-per-capita.csv</span>
+        <div class="res-actions"><button type="button" class="import-btn" data-import="csv">Import</button><a class="dl-link" href="assets/samples/amapa_pib-per-capita.csv" download>Download</a></div>
+        <svg class="grip" viewBox="0 0 10 16" aria-hidden="true"><circle cx="2" cy="3" r="1.4"/><circle cx="8" cy="3" r="1.4"/><circle cx="2" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="2" cy="13" r="1.4"/><circle cx="8" cy="13" r="1.4"/></svg>
+      </div>
       <button id="downloadAll" class="primary mini">Download all</button>
     </section>
     </div>
@@ -113,6 +119,14 @@
       </div>
     </header>
     <div class="stage" id="stage">
+      <div id="dropOverlay" class="drop-overlay" hidden>
+        <svg viewBox="0 0 84 84" width="84" height="84" fill="none" stroke="#faf9f5" stroke-width="3" stroke-linecap="round" aria-hidden="true">
+          <rect x="26" y="26" width="52" height="52" rx="10" stroke-dasharray="8 8"/>
+          <rect x="5" y="5" width="52" height="52" rx="10" fill="#101010"/>
+        </svg>
+        <p>Drop on canvas to Import</p>
+      </div>
+      <div id="canvasToast" class="canvas-toast" hidden></div>
       <section id="uploadView" class="upload">
         <h2>Upload a map svg</h2>
         <label class="btn">Choose SVG file
@@ -158,6 +172,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="assets/samples.js"></script>
+<script src="samples.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
