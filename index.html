@@ -98,7 +98,7 @@
         <input type="checkbox" id="certify">
         <span>I certify that every territory in the SVG and in the sheet is named exactly the same.<b class="req" aria-hidden="true">*</b></span>
       </label>
-      <button id="startBtn" class="primary" disabled>Start</button>
+      <button id="startBtn" class="primary not-ready" aria-disabled="true">Start</button>
     </div>
   </aside>
 
@@ -169,6 +169,7 @@
   <input type="range" id="hue" min="0" max="360" step="1">
 </div>
 <div id="toast" class="toast" hidden></div>
+<div id="warnStack" class="warn-stack"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

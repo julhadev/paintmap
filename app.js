@@ -147,15 +147,18 @@ function suggest(name, used) {
   return bs >= .55 ? S.labels.get(best) : null;
 }
 function refresh() {
-  const { items, missing } = match(), mode = getMode(), uniq = mode === 'unique', min = uniq ? 1 : 2;
-  const n = items.length, rc = $('rangeCount'), distinct = new Set(items.map(i => i.key)).size;
+  const { items, missing } = match(), mode = getMode(), uniq = mode === 'unique', min = uniq ? 1 : 3;   // ranges need at least 3 territories (max ranges = territories - 1)
+  const n = items.length, rc = $('rangeCount'), distinct = new Set(items.map(i => i.key)).size, cap = uniq ? n : n - 1;
   $('rangeLabel').textContent = uniq ? 'Number of colors' : 'Range measure';
-  rc.min = uniq ? 1 : 2; rc.max = uniq ? 99 : Math.max(n, 2);
+  rc.min = uniq ? 1 : 2; rc.max = n >= min ? cap : 99;
   if (uniq && !S.edited && distinct) rc.value = distinct;
-  if (!uniq && +rc.value > n && n >= 2) rc.value = n;
+  if (n >= min && +rc.value > cap) {   // colors <= territories, ranges <= territories - 1
+    rc.value = cap;
+    if (S.edited) warn(uniq ? `There are only ${n} territories, so colors were limited to ${n}.` : `There are ${n} territories, so ranges were limited to ${cap} (territories - 1).`);
+  }
   const ready = S.svg && S.rows;
   $('rangeHint').textContent = !ready ? 'Load an SVG and a sheet first.'
-    : uniq ? `Found ${distinct} distinct values in the value column (one color each).` : `Min 2, max ${n} (matched territories).`;
+    : uniq ? `Found ${distinct} distinct values in the value column (one color each). Max ${n}.` : `Min 2, max ${cap} (matched territories - 1).`;
   const same = ready && $('nameCol').value === $('valueCol').value, mismatch = uniq && distinct > 0 && +rc.value !== distinct;
   if (ready) {
     const used = new Set(items.map(i => i.el));
@@ -165,7 +168,25 @@ function refresh() {
     else if (missing.length) setMsg(`${n} matched. ${missing.length} sheet row(s) have no shape with the same name: ` + missing.slice(0, 6).map(m => { const g = suggest(m, used); return g ? `${m} (SVG has "${g}")` : m; }).join('; ') + (missing.length > 6 ? '…' : '') + '. Rename them to match, then reload the file.', 'warn');
     else setMsg((uniq ? `${n} territories matched, ${distinct} distinct values.` : `${n} territories matched.`) + ($('titleInput').value.trim() ? '' : ' A map title is required.'), $('titleInput').value.trim() ? '' : 'warn');
   } else setMsg('');
-  $('startBtn').disabled = !(n >= min && $('certify').checked && !same && !mismatch && $('titleInput').value.trim() && (uniq || (+rc.value >= 2 && +rc.value <= n)));
+  const issues = [];
+  if (!S.svg) issues.push('Upload a map SVG.');
+  if (!S.rows) issues.push('Upload a data sheet.');
+  if (!$('titleInput').value.trim()) issues.push('Add a map title.');
+  if (ready) {
+    if (same) issues.push('The name column and the value column must be different.');
+    else if (n < min) issues.push(`Too few sheet rows match shape names in the SVG (found ${n}, need at least ${min}).`);
+    else {
+      if (!uniq && !(+rc.value >= 2 && +rc.value <= cap)) issues.push(`Range measure must be a number between 2 and ${cap}.`);
+      if (mismatch) issues.push(`Number of colors must match the ${distinct} distinct values in the value column.`);
+    }
+  }
+  if (!$('certify').checked) issues.push('Confirm that every territory is named exactly the same in the SVG and the sheet.');
+  S.issues = issues;
+  $('startBtn').classList.toggle('not-ready', issues.length > 0); $('startBtn').setAttribute('aria-disabled', String(issues.length > 0));
+}
+function warn(text) {
+  const t = document.createElement('div'); t.className = 'warn-toast'; t.textContent = text; t.onclick = () => t.remove();
+  $('warnStack').appendChild(t); setTimeout(() => t.remove(), 5500);
 }
 ['nameCol', 'valueCol'].forEach(i => $(i).onchange = () => { S.edited = false; refresh(); });
 document.querySelectorAll('input[name=mode]').forEach(r => r.onchange = () => { S.edited = false; refresh(); });
@@ -178,8 +199,9 @@ function breaksFor(vals, n, idx) {
   return b;
 }
 $('startBtn').onclick = () => {
+  if (S.issues.length) { S.issues.forEach(warn); return; }   // one warning per missing field
   const { items } = match(); S.mode = getMode();
-  if (items.length < (S.mode === 'unique' ? 1 : 2)) return;
+  if (items.length < (S.mode === 'unique' ? 1 : 3)) return;
   let b = [];
   if (S.mode === 'unique') {
     const cats = [...new Set(items.map(i => i.key))], numeric = cats.every(c => !isNaN(+c));
@@ -187,7 +209,7 @@ $('startBtn').onclick = () => {
     S.cats = cats; S.ranges = cats.slice();
     S.colors = cats.map((_, i) => CATS[i] || hsvToHex((i * 137.5) % 360, .65, .9));
   } else {
-    const n = Math.min(Math.max(2, +$('rangeCount').value), items.length);
+    const n = Math.min(Math.max(2, +$('rangeCount').value), items.length - 1);
     const vals = items.map(i => i.value).sort((a, b) => a - b), N = vals.length;
     const size = Math.ceil(N / n);
     b = breaksFor(vals, n, k => k * size);
@@ -478,4 +500,6 @@ $('exportMenu').onclick = async e => {
     }
   } catch (err) { toast('Export failed: ' + err.message); }
 };
+$('startBtn').disabled = false;   // readiness is shown by the .not-ready class; clicks show the warnings
+refresh();
 })();

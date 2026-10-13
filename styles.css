@@ -238,3 +238,12 @@ html.embedded body{background:transparent}
 .drop-overlay p{margin:0;font-size:26px;color:var(--text)}
 .canvas-toast{position:absolute;top:16px;left:16px;z-index:60;background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:13px;box-shadow:0 6px 20px #0008}
 .doc img{max-width:100%;height:auto;border-radius:8px}
+
+/* ===== v7: dot-grid canvas ===== */
+.stage{background-color:var(--bg);background-image:radial-gradient(circle,#3d3d3a 1px,transparent 1.3px);background-size:24px 24px;background-position:center}
+
+/* ===== v8: warnings ===== */
+.primary.not-ready{background:var(--line);color:var(--muted);cursor:not-allowed}
+.primary.not-ready:hover{background:var(--line)}
+.warn-stack{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:70;pointer-events:none}
+.warn-toast{pointer-events:auto;background:#4d3d00;color:#ffe14d;border:1px solid #7a6200;border-radius:8px;padding:10px 16px;font-size:13px;box-shadow:0 6px 20px #0008;cursor:pointer;max-width:min(520px,90vw)}
